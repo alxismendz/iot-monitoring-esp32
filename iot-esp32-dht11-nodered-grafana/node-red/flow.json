@@ -1,0 +1,116 @@
+[
+    {
+        "id": "a513264aecee287d",
+        "type": "tab",
+        "label": "Datos DHT11 ESP32",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "b8ccf041dbf574a2",
+        "type": "http in",
+        "z": "a513264aecee287d",
+        "name": "Entrada desde ESP32",
+        "url": "/dht",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 260,
+        "y": 140,
+        "wires": [
+            [
+                "bc0409b8cb5a8915",
+                "4fb67259c4a10cd5"
+            ]
+        ]
+    },
+    {
+        "id": "bc0409b8cb5a8915",
+        "type": "debug",
+        "z": "a513264aecee287d",
+        "name": "Datos crudos del ESP32",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 510,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "4fb67259c4a10cd5",
+        "type": "function",
+        "z": "a513264aecee287d",
+        "name": "Formatear para InfluxDB",
+        "func": "// Extraer y convertir datos a float\ntry {\n    let temp = msg.payload.temperature || msg.payload.temperatura;\n    let hum = msg.payload.humedad;\n\n    if (typeof temp === 'undefined' || typeof hum === 'undefined') {\n        throw new Error(\"Datos incompletos\");\n    }\n\n    temp = parseFloat(temp);\n    hum = parseFloat(hum);\n\n    msg.measurement = \"dht11\";\n    msg.payload = {\n        temperature: temp,\n        humedad: hum\n    };\n    msg.tags = {\n        origen: \"ESP32\"\n    };\n\n    return msg;\n} catch (error) {\n    node.error(\"Error:\", error);\n    return null;\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 530,
+        "y": 160,
+        "wires": [
+            [
+                "e6d744724a91b51e",
+                "660adce19ca8e41d",
+                "d1e28a6405f8e316"
+            ]
+        ]
+    },
+    {
+        "id": "e6d744724a91b51e",
+        "type": "debug",
+        "z": "a513264aecee287d",
+        "name": "Datos formateados",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "x": 790,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "660adce19ca8e41d",
+        "type": "influxdb out",
+        "z": "a513264aecee287d",
+        "influxdb": "influxdb-config",
+        "name": "Guardar en InfluxDB",
+        "measurement": "dht11",
+        "precision": "",
+        "retentionPolicy": "autogen",
+        "x": 790,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "d1e28a6405f8e316",
+        "type": "http response",
+        "z": "a513264aecee287d",
+        "name": "Respuesta OK",
+        "statusCode": "200",
+        "headers": {},
+        "x": 790,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "influxdb-config",
+        "type": "influxdb",
+        "hostname": "localhost",
+        "port": "8086",
+        "protocol": "http",
+        "database": "mi_base_de_datos",
+        "name": "influxdb",
+        "usetls": false,
+        "tls": "",
+        "influxdbVersion": "1.x",
+        "url": "",
+        "timeout": "",
+        "rejectUnauthorized": false
+    }
+]
